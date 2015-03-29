@@ -13,6 +13,10 @@ type LogEvent struct {
 	Id           int64
 	Name         string
 	StickyFields Fields
+
+	// Loggers that rediect output.
+	StdoutLogger   *logrus.Logger
+	LogstashLogger *logrus.Logger
 }
 
 var (
@@ -29,6 +33,8 @@ func New(name string, sticky Fields) LogEvent {
 	le.Id = time.Now().UnixNano()
 	le.Name = name
 	le.StickyFields = sticky
+	le.StdoutLogger = logrus.New()
+	le.StdoutLogger.Formatter = &logrus.JSONFormatter{}
 
 	le.Update(STATUS_START, name, nil)
 	return le
@@ -57,60 +63,59 @@ func (e *LogEvent) Update(status uint, message string, fields Fields) {
 
 	switch status {
 	case STATUS_START:
-		Info(fmt.Sprintf("[STATUS_START] %s", message), fields)
+		e.Info(fmt.Sprintf("[STATUS_START] %s", message), fields)
 		break
 	case STATUS_OK:
-		Info(fmt.Sprintf("[STATUS_OK] %s", message), fields)
+		e.Info(fmt.Sprintf("[STATUS_OK] %s", message), fields)
 		break
 	case STATUS_COMPLETE:
-		Info(fmt.Sprintf("[STATUS_COMPLETE] %s", message), fields)
+		e.Info(fmt.Sprintf("[STATUS_COMPLETE] %s", message), fields)
 		break
 	case STATUS_WARNING:
-		Warn(fmt.Sprintf("[STATUS_WARNING] %s", message), fields)
+		e.Warn(fmt.Sprintf("[STATUS_WARNING] %s", message), fields)
 		break
 	case STATUS_ERROR:
-		Error(fmt.Sprintf("[STATUS_ERROR] %s", message), fields)
+		e.Error(fmt.Sprintf("[STATUS_ERROR] %s", message), fields)
 		break
 	case STATUS_FATAL:
-		Fatal(fmt.Sprintf("[STATUS_FATAL] %s", message), fields)
+		e.Fatal(fmt.Sprintf("[STATUS_FATAL] %s", message), fields)
 		break
-
 	}
 }
 
-func Info(message string, fields Fields) {
+func (e *LogEvent) Info(message string, fields Fields) {
 	if fields == nil {
 		fields = make(map[string]interface{})
 	}
 
 	fields["_process"] = os.Args[0]
 
-	logrus.WithFields(logrus.Fields(fields)).Info(message)
+	e.StdoutLogger.WithFields(logrus.Fields(fields)).Info(message)
 }
 
-func Warn(message string, fields Fields) {
+func (e *LogEvent) Warn(message string, fields Fields) {
 	if fields == nil {
 		fields = make(map[string]interface{})
 	}
 	fields["_process"] = os.Args[0]
 
-	logrus.WithFields(logrus.Fields(fields)).Warn(message)
+	e.StdoutLogger.WithFields(logrus.Fields(fields)).Warn(message)
 }
 
-func Error(message string, fields Fields) {
+func (e *LogEvent) Error(message string, fields Fields) {
 	if fields == nil {
 		fields = make(map[string]interface{})
 	}
 	fields["_process"] = os.Args[0]
 
-	logrus.WithFields(logrus.Fields(fields)).Error(message)
+	e.StdoutLogger.WithFields(logrus.Fields(fields)).Error(message)
 }
 
-func Fatal(message string, fields Fields) {
+func (e *LogEvent) Fatal(message string, fields Fields) {
 	if fields == nil {
 		fields = make(map[string]interface{})
 	}
 	fields["_process"] = os.Args[0]
 
-	logrus.WithFields(logrus.Fields(fields)).Fatal(message)
+	e.StdoutLogger.WithFields(logrus.Fields(fields)).Fatal(message)
 }
