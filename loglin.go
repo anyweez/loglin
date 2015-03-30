@@ -60,7 +60,7 @@ func updateFields(sticky Fields, fields Fields, eventid int64) Fields {
 		fields = make(map[string]interface{})
 	}
 
-	fields["_process"] = os.Args[0]
+	fields["_process"] = strings.Replace(os.Args[0], "/", ".", -1)
 	fields["_eventid"] = eventid
 
 	// Copy sticky fields over whenever they exist.
