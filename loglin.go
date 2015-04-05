@@ -42,14 +42,17 @@ func New(name string, sticky Fields) LogEvent {
 	le.JsonLogger = logrus.New()
 	le.JsonLogger.Formatter = &logrus.JSONFormatter{}
 
-	addr, err := net.ResolveUDPAddr("udp", "localhost:10000")
+	// Connect to an address on my internal network
+	// TODO: parameterize this so that it's actually useful to others.
+	connectionString := "logger.service.fy:10000"
+	addr, err := net.ResolveUDPAddr("udp", connectionString)
 	if err != nil {
-		fmt.Println("[1 / 2] Cannot connect to logstash on localhost:10000")
+		fmt.Println("[1 / 2] Cannot connect to logstash on " + connectionString)
 	}
 
 	le.UdpDest, err = net.DialUDP("udp", nil, addr)
 	if err != nil {
-		fmt.Println("[2 / 2] Cannot connect to logstash on localhost:10000")
+		fmt.Println("[2 / 2] Cannot connect to logstash on " + connectionString)
 	}
 
 	le.Update(STATUS_START, name, nil)
